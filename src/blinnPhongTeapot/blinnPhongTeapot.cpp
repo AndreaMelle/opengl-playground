@@ -5,6 +5,7 @@
 #include <glpgBaseMeshLoader.h>
 #include <glpgCompositeIndexdedMeshRenderer.h>
 #include <glpgAssImpLoader.h>
+#include <glpgPrimitives.h>
 #include <iostream>
 
 using namespace glpg;
@@ -51,6 +52,27 @@ class blinnPhongTeapot : public App
     math::mat4 projection;
 
     bool showDebugNormals;
+    
+    struct
+    {
+        GLuint progID;
+        GLint color_uniform;
+        math::vec3 color;
+        GLint transform_uniform;
+    } unlitMat;
+    
+    struct
+    {
+        IMeshRenderer* mesh;
+        math::mat4 transform;
+    } grid;
+    
+    struct
+    {
+        IMeshRenderer* mesh;
+        math::mat4 transform;
+        
+    } sphere;
 
     virtual void settings()
     {
@@ -129,29 +151,41 @@ class blinnPhongTeapot : public App
 
         normalVizMVPUniform = glGetUniformLocation(normalVizProgramID, "MVP");
         normalLengthUniform = glGetUniformLocation(normalVizProgramID, "normal_length");
+        
+        // Unlit shader
+        GLuint unlitShaders[2];
+        unlitShaders[0] = shader::fromFile("../shaders/unlit/pass.vert", GL_VERTEX_SHADER, true);
+        unlitShaders[1] = shader::fromFile("../shaders/unlit/unlit_color.frag", GL_FRAGMENT_SHADER, true);
+        assert(unlitShaders[0] != 0 && unlitShaders[1] != 0);
+        unlitMat.progID = program::linkShaders(unlitShaders, 2, true, true);
+        assert(unlitMat.progID != 0);
+        unlitMat.color_uniform = glGetUniformLocation(unlitMat.progID, "color");
+        unlitMat.transform_uniform = glGetUniformLocation(unlitMat.progID, "MVP");
+        unlitMat.color = math::vec3(1.0f, 1.0f, 1.0f);
+        glUseProgram(unlitMat.progID);
+        glUniform3fv(unlitMat.color_uniform, 1, unlitMat.color);
+        glUseProgram(0);
+        
 
         // Generate the uniform buffer
         glGenBuffers(1, &uniforms_buffer);
         glBindBuffer(GL_UNIFORM_BUFFER, uniforms_buffer);
-        // Defined dynamic because we animate
         glBufferData(GL_UNIFORM_BUFFER, sizeof(uniforms_block), NULL, GL_DYNAMIC_DRAW);
-
+        
         teapotMesh = IMeshLoader<AssImpLoader, CompositeIndexedMeshRenderer>::Create("../models/teapot.obj");
+        assert(teapotMesh != NULL);
 
-        if(teapotMesh == NULL)
-        {
-            std::cout << "Failed to load model." << std::endl;
-            exit(-1);
-        }
+        grid.mesh = glpg::UnitGrid::Create(5.0f, 5.0f, 10, 10);
+        assert(grid.mesh != NULL);
+        grid.transform = math::translate(0.0f, -0.5f, -4.0f);
+        
+        sphere.mesh = UnitSphere::CreateMesh();
+        assert(sphere.mesh != NULL);
+        
+        sphere.transform= math::translate(0.0f, 0.0f, -5.0f) * math::scale(1.0f);
 
-
-        //cull front faces
-        glEnable(GL_CULL_FACE);
-        glFrontFace(GL_CCW);
-
-        //standard depth test
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_CULL_FACE); glFrontFace(GL_CCW);
+        glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LEQUAL);
 
         onResize(mWindowWidth, mWindowHeight);
 
@@ -163,18 +197,28 @@ class blinnPhongTeapot : public App
 
         glClearBufferfv(GL_COLOR, 0, clearColor);
         glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+        
+        math::mat4 MVP = projection * grid.transform;
+        math::mat4 normalMatrix = grid.transform.inverse().transpose();
+        
+        glUseProgram(unlitMat.progID);
+
+        glUniformMatrix4fv(unlitMat.transform_uniform, 1, GL_FALSE, MVP);
+        
+        grid.mesh->render();
+        
+        glUseProgram(0);
+        
+        math::mat4 model = math::translate(0.0f, -0.5f, -4.0f)
+        * math::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f)
+        * math::scale(0.01f);
+        MVP = projection * model;
+        
+        normalMatrix = model.inverse().transpose();
 
         glUseProgram(programID);
 
         // set the uniforms buffer
-
-        math::mat4 model = math::translate(0.0f, -0.5f, -2.0f)
-                            * math::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f)
-                            * math::scale(0.01f);
-        math::mat4 MVP = projection * model;
-
-        math::mat4 normalMatrix = model.inverse().transpose();
-
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, uniforms_buffer);
         uniforms_block* block = (uniforms_block*)glMapBufferRange(GL_UNIFORM_BUFFER,
                                                                   0,
@@ -197,7 +241,6 @@ class blinnPhongTeapot : public App
             teapotMesh->render();
         }
 
-        //GLint error = glGetError();
 
     }
 

@@ -44,6 +44,7 @@ namespace glpg
     // event callbacks
     virtual void onResize(const int& width, const int& height) { }
     virtual void onKey(const int& key, const int& action) { }
+    virtual void onChar(const unsigned int& c) { }
     virtual void onMouseButton(const int& button, const int& action) { }
     virtual void onMouseMove(const int& x, const int& y) { }
     virtual void onMouseWheel(const int& pos) { }
@@ -63,6 +64,7 @@ namespace glpg
 
     static void glfw_onResize(GLFWwindow* window, int w, int h);
     static void glfw_onKey(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void glfw_onChar(GLFWwindow* window, unsigned int c);
     static void glfw_onMouseButton(GLFWwindow* window, int button, int action, int mods);
     static void glfw_onMouseMove(GLFWwindow* window, double x, double y);
     static void glfw_onMouseWheel(GLFWwindow* window, double xoffset, double yoffset);

@@ -1,5 +1,6 @@
 build/
 bin/
+asset_workspace/
 
 # Created by https://www.gitignore.io/api/xcode,osx,windows,visualstudio
 

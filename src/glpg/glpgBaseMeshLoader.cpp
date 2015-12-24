@@ -2,7 +2,9 @@
 #include <string>
 
 //FIXME: no indices support. This will generate triangles for everything
-glpg::BaseMeshRenderer* glpg::BaseMeshLoader::CreateImpl(const std::string& filename)
+glpg::BaseMeshRenderer* glpg::BaseMeshLoader::CreateImpl(const std::string& filename,
+                                                         const unsigned int options,
+                                                         const float normalSmoothAngle)
 {
     std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
     

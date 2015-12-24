@@ -5,21 +5,41 @@
 #include <assimp/mesh.h>
 #include <assimp/scene.h>
 
-glpg::CompositeIndexedMeshRenderer* glpg::AssImpLoader::CreateImpl(const std::string& filename)
+glpg::CompositeIndexedMeshRenderer* glpg::AssImpLoader::CreateImpl(const std::string& filename,
+                                                                   const unsigned int options,
+                                                                   const float normalSmoothAngle)
 {
     
     Assimp::Importer importer;
     
-    //importer.SetPropertyFloat(AI_CONFIG_PP_GSN_MAX_SMOOTHING_ANGLE, 35.0f);
+    if((options & MeshLoaderOption_SetSmoothAngle) != 0)
+    {
+        importer.SetPropertyFloat(AI_CONFIG_PP_GSN_MAX_SMOOTHING_ANGLE, normalSmoothAngle);
+    }
     
-    const aiScene* scene = importer.ReadFile(filename.c_str()
-                                             , aiProcess_Triangulate
-                                             | aiProcess_GenSmoothNormals
-                                             | aiProcess_FlipUVs
-                                             | aiProcess_FindDegenerates
-                                             | aiProcess_FixInfacingNormals
-                                             | aiProcess_FindInvalidData
-                                             );
+    unsigned int assImpOptions = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_FindDegenerates | aiProcess_FixInfacingNormals | aiProcess_FindInvalidData;
+    
+    bool hasNormals = false;
+    bool hasTangents = false;
+    
+    if((options & MeshLoaderOptions::MeshLoaderOption_GenerateNormals) != 0)
+    {
+        hasNormals = true;
+        
+        if((options & MeshLoaderOptions::MeshLoaderOption_SmoothNormals) != 0)
+            assImpOptions |= aiProcess_GenSmoothNormals;
+        else
+            assImpOptions |= aiProcess_GenNormals;
+    }
+    
+    if ((options & MeshLoaderOptions::MeshLoaderOption_GenerateTangents) != 0)
+    {
+        hasTangents = true;
+        assImpOptions |= aiProcess_CalcTangentSpace;
+    }
+    
+    
+    const aiScene* scene = importer.ReadFile(filename.c_str(), assImpOptions);
     
     if (!scene)
     {
@@ -34,6 +54,7 @@ glpg::CompositeIndexedMeshRenderer* glpg::AssImpLoader::CreateImpl(const std::st
     std::vector<math::vec3> positions;
     std::vector<math::vec2> uvs;
     std::vector<math::vec3> normals;
+    std::vector<math::vec3> tangents;
     std::vector<unsigned int> indices;
     
     unsigned int numVertices = 0;
@@ -53,7 +74,8 @@ glpg::CompositeIndexedMeshRenderer* glpg::AssImpLoader::CreateImpl(const std::st
     
     // Reserve space in the vectors for the vertex attributes and indices
     positions.reserve(numVertices);
-    normals.reserve(numVertices);
+    if(hasNormals) normals.reserve(numVertices);
+    if(hasTangents) tangents.reserve(numVertices);
     uvs.reserve(numVertices);
     indices.reserve(numIndices);
     
@@ -68,11 +90,21 @@ glpg::CompositeIndexedMeshRenderer* glpg::AssImpLoader::CreateImpl(const std::st
         for (unsigned int j = 0 ; j < mesh->mNumVertices ; j++)
         {
             const aiVector3D* pPos      = &(mesh->mVertices[j]);
-            const aiVector3D* pNormal   = &(mesh->mNormals[j]);
-            const aiVector3D* pTexCoord = mesh->HasTextureCoords(0) ? &(mesh->mTextureCoords[0][j]) : &Zero3D;
-            
             positions.push_back(math::vec3(pPos->x, pPos->y, pPos->z));
-            normals.push_back(math::vec3(pNormal->x, pNormal->y, pNormal->z));
+            
+            if(hasNormals)
+            {
+                const aiVector3D* pNormal   = &(mesh->mNormals[j]);
+                normals.push_back(math::vec3(pNormal->x, pNormal->y, pNormal->z));
+            }
+            
+            if(hasTangents)
+            {
+                const aiVector3D* pTangent = &(mesh->mTangents[j]);
+                tangents.push_back(math::vec3(pTangent->x, pTangent->y, pTangent->z));
+            }
+            
+            const aiVector3D* pTexCoord = mesh->HasTextureCoords(0) ? &(mesh->mTextureCoords[0][j]) : &Zero3D;
             uvs.push_back(math::vec2(pTexCoord->x, pTexCoord->y));
         }
         
@@ -89,11 +121,11 @@ glpg::CompositeIndexedMeshRenderer* glpg::AssImpLoader::CreateImpl(const std::st
         
     }
     
-    
     glpg::CompositeIndexedMeshRenderer* mesh = new glpg::CompositeIndexedMeshRenderer(entries,
                                                                                       positions,
                                                                                       uvs,
                                                                                       normals,
+                                                                                      tangents,
                                                                                       indices);
     
     return mesh;

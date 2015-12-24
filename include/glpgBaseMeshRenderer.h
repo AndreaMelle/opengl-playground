@@ -11,12 +11,13 @@ namespace glpg
     class BaseMeshRenderer : public IMeshRenderer
     {
     public:
-        BaseMeshRenderer(const int& size,
-                         const int& offset,
+        BaseMeshRenderer(const int size,
+                         const int offset,
                          const std::vector<math::vec3>& vertices,
                          const std::vector<math::vec2>& uvs,
                          const std::vector<math::vec3>& normals,
-                         const GLenum mode = GL_TRIANGLES);
+                         const GLenum mode = GL_TRIANGLES,
+                         const std::vector<math::vec3>& colors = std::vector<math::vec3>());
         
         
         virtual ~BaseMeshRenderer();
@@ -30,23 +31,27 @@ namespace glpg
                   const std::vector<math::vec3>& vertices,
                   const std::vector<math::vec2>& uvs,
                   const std::vector<math::vec3>& normals,
-                  const GLenum mode);
+                  const GLenum mode,
+                  const std::vector<math::vec3>& colors = std::vector<math::vec3>());
         
         void dispose();
 
         static const int POSITION_LOC = 0;
         static const int UV_LOC = 1;
         static const int NORMAL_LOC = 2;
+        static const int COLOR_LOC = 3;
         
         static const int POSITION_SIZE = 3;
         static const int UV_SIZE = 2;
         static const int NORMAL_SIZE = 3;
+        static const int COLOR_SIZE = 3;
       
         GLuint vao;
 
         GLuint vertexBuffer;
         GLuint uvBuffer;
         GLuint normalBuffer;
+        GLuint colorBuffer;
         
         int mVertexCount;
         

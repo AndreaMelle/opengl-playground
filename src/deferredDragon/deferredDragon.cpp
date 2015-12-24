@@ -60,7 +60,7 @@ class deferredDragon : public App
     
     GLint viz_mode_uniform;
     
-    GLint viz_sampler_uniform[2];
+    GLint viz_sampler_uniform[3];
     
     enum
     {
@@ -68,7 +68,8 @@ class deferredDragon : public App
         VIZ_NORMALS,
         VIZ_POS,
         VIZ_DIFFUSE,
-        VIZ_META
+        VIZ_META,
+        VIZ_DEPTH
     } viz_mode;
 
     IMeshRenderer* frogMesh;
@@ -174,6 +175,7 @@ class deferredDragon : public App
         viz_mode_uniform = glGetUniformLocation(vizProg, "viz_mode");
         viz_sampler_uniform[0] = glGetUniformLocation(vizProg, "gbuffer_tex0");
         viz_sampler_uniform[1] = glGetUniformLocation(vizProg, "gbuffer_tex1");
+        viz_sampler_uniform[2] = glGetUniformLocation(vizProg, "gbuffer_depth");
         
         // Set uniforms for shaders
         
@@ -185,8 +187,6 @@ class deferredDragon : public App
         glUseProgram(lightProg);
         glUniform1i(num_lights, 1);
         
-        
-        
         glUniform1i(gbuffer_sampler_uniform[0], 0);
         glUniform1i(gbuffer_sampler_uniform[1], 1);
         
@@ -195,6 +195,7 @@ class deferredDragon : public App
         glUniform1i(viz_mode_uniform, viz_mode);
         glUniform1i(viz_sampler_uniform[0], 0);
         glUniform1i(viz_sampler_uniform[1], 1);
+        glUniform1i(viz_sampler_uniform[2], 2);
         glUseProgram(0);
         
         
@@ -289,6 +290,9 @@ class deferredDragon : public App
         }
         else
         {
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, gbufferTex[2]);
+            
             glUseProgram(vizProg);
             glUniform1i(viz_mode_uniform, viz_mode);
         }
@@ -328,6 +332,9 @@ class deferredDragon : public App
                 case '4':
                     viz_mode = VIZ_META;
                     break;
+                case '5':
+                    viz_mode = VIZ_DEPTH;
+                    break;
             }
         }
     }
@@ -335,7 +342,7 @@ class deferredDragon : public App
     virtual void onResize(const int& width, const int& height)
     {
         aspect = (float)width / (float)height;
-        projection = math::perspective(50.0f, aspect, 0.1f, 1000.0f);
+        projection = math::perspective(50.0f, aspect, 0.1f, 10.0f);
     }
 
     virtual void shutdown()

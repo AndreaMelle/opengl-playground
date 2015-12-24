@@ -4,6 +4,7 @@ layout (location = 0) out vec4 color;
 
 uniform usampler2D gbuffer_tex0;
 uniform sampler2D gbuffer_tex1;
+uniform sampler2D gbuffer_depth;
 
 uniform int viz_mode = 1;
 
@@ -14,6 +15,7 @@ struct fragment_info_t
     float specular_power;
     vec3  position_modelview;
     uint  material_id;
+    float depth;
 };
 
 #define MAX_SHORT_F 65535.0f
@@ -45,6 +47,11 @@ void unpack_gbuffer(ivec2 coord, out fragment_info_t frag)
 
     frag.position_modelview = data1.xyz;
     frag.specular_power = data1.w;
+
+    float d = texelFetch(gbuffer_depth, ivec2(coord), 0).x;
+    float near = 0.1;
+    float far = 10.0;
+    frag.depth = 1.0 - ((2.0 * near) / (far + near - d * (far - near)));
 }
 
 vec4 compute_viz(fragment_info_t frag)
@@ -69,6 +76,11 @@ vec4 compute_viz(fragment_info_t frag)
                         float(frag.material_id / 16) / 15.0,
                         1.0);
           break;
+        case 5:
+
+          result = vec4(frag.depth, frag.depth, frag.depth, 1.0);
+          break;
+
     }
 
     return result;

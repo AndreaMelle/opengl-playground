@@ -11,7 +11,9 @@ namespace glpg
     class AssImpLoader : public IMeshLoader<AssImpLoader, CompositeIndexedMeshRenderer>
     {
     public:
-        static CompositeIndexedMeshRenderer* CreateImpl(const std::string& filename);
+        static CompositeIndexedMeshRenderer* CreateImpl(const std::string& filename,
+                                                        const unsigned int options = MeshLoaderOption_GenerateNormals | MeshLoaderOption_SmoothNormals,
+                                                        const float normalSmoothAngle = std::numeric_limits<float>::quiet_NaN());
         
     private:
         AssImpLoader() {}

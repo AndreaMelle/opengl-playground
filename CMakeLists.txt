@@ -6,6 +6,10 @@ LINK_DIRECTORIES( ${CMAKE_SOURCE_DIR}/lib )
 LINK_DIRECTORIES( ${CMAKE_SOURCE_DIR}/deps/glfw/lib/osx )
 LINK_DIRECTORIES( ${CMAKE_SOURCE_DIR}/deps/assimp/lib/osx )
 
+if (APPLE)
+LINK_DIRECTORIES( /usr/local/lib )
+endif()
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
@@ -23,22 +27,29 @@ find_package(OpenGL)
 set (CMAKE_DEBUG_POSTFIX "_d")
 
 if(WIN32)
-set(COMMON_LIBS glpg optimized glfw3 debug glfw3_d ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
+set(COMMON_LIBS glpg assimp SOIL AntTweakBar optimized glfw3 debug glfw3_d ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
 elseif (APPLE)
 find_library(COCOA_LIBRARY Cocoa REQUIRED)
 find_library(IOKIT_LIBRARY IOKit REQUIRED)
 find_library(COREVID_LIBRARY CoreVideo REQUIRED)
 find_library(GL_LIBRARY OpenGL REQUIRED)
-set(COMMON_LIBS glpg glfw3 assimp ${COCOA_LIBRARY} ${GL_LIBRARY} ${IOKIT_LIBRARY} ${COREVID_LIBRARY})
+set(COMMON_LIBS glpg glfw3 assimp SOIL AntTweakBar ${COCOA_LIBRARY} ${GL_LIBRARY} ${IOKIT_LIBRARY} ${COREVID_LIBRARY})
 elseif (UNIX)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLFW REQUIRED glfw3)
-set(COMMON_LIBS glpg glfw3 X11 Xrandr Xinerama Xi Xxf86vm Xcursor GL rt dl)
+set(COMMON_LIBS glpg glfw3 assimp SOIL AntTweakBar X11 Xrandr Xinerama Xi Xxf86vm Xcursor GL rt dl)
 else()
 set(COMMON_LIBS glpg)
 endif()
 
 set(COMMON_LIBS ${COMMON_LIBS} ${EXTRA_LIBS})
+
+add_library(SOIL
+            deps/soil/src/image_helper.c
+            deps/soil/src/stb_image_aug.c
+            deps/soil/src/image_DXT.c
+            deps/soil/src/SOIL.c
+)
 
 add_library(glpg
             src/glpg/glpgApp.cpp
@@ -48,6 +59,7 @@ add_library(glpg
             src/glpg/glpgCompositeIndexdedMeshRenderer.cpp
             src/glpg/glpgExt.cpp
             src/glpg/glpgShader.cpp
+            src/glpg/glpgTextures.cpp
             include/glpgApp.h
             include/glpgAssImpLoader.h
             include/glpgBaseMeshLoader.h
@@ -59,6 +71,7 @@ add_library(glpg
             include/glpgMath.h
             include/glpgPrimitives.h
             include/glpgShader.h
+            include/glpgTextures.h
             deps/gl3w/src/gl3w.c
 )
 
@@ -73,6 +86,9 @@ set(EXAMPLES
   cellTeapot
   deferredDragon
   packingStuff
+  textureCube
+  envMapSampling
+  nprShading
 )
 
 #find_package(OpenMP)
@@ -99,6 +115,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 include_directories( include )
 include_directories(deps/glfw/include)
 include_directories(deps/gl3w/include)
+include_directories(deps/soil/src)
 include_directories(deps/assimp/include)
 
 if (APPLE)

@@ -11,7 +11,9 @@ namespace glpg
     class BaseMeshLoader : public IMeshLoader<BaseMeshLoader, BaseMeshRenderer>
     {
     public:
-        static BaseMeshRenderer* CreateImpl(const std::string& filename);
+        static BaseMeshRenderer* CreateImpl(const std::string& filename,
+                                            const unsigned int options = MeshLoaderOption_GenerateNormals | MeshLoaderOption_SmoothNormals,
+                                            const float normalSmoothAngle = std::numeric_limits<float>::quiet_NaN());
     private:
         BaseMeshLoader() {}
     };

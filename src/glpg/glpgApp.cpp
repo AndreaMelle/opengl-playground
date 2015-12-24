@@ -51,6 +51,8 @@ void App::run()
   glfwSetMouseButtonCallback(mWindowHandle, glfw_onMouseButton);
   glfwSetCursorPosCallback(mWindowHandle, glfw_onMouseMove);
   glfwSetScrollCallback(mWindowHandle, glfw_onMouseWheel);
+    glfwSetCharCallback(mWindowHandle, glfw_onChar);
+    
   if (!mCursor)
   {
       glfwSetInputMode(mWindowHandle, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
@@ -182,6 +184,11 @@ void App::glfw_onMouseMove(GLFWwindow* window, double x, double y)
 void App::glfw_onMouseWheel(GLFWwindow* window, double xoffset, double yoffset)
 {
   gApp->onMouseWheel(static_cast<int>(yoffset));
+}
+
+void App::glfw_onChar(GLFWwindow* window, unsigned int c)
+{
+    gApp->onChar(c);
 }
 
 void APIENTRY App::debug_callback(GLenum source
