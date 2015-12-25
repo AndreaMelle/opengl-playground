@@ -53,6 +53,7 @@ add_library(SOIL
 
 add_library(glpg
             src/glpg/glpgApp.cpp
+            src/glpg/glpgArcball.cpp
             src/glpg/glpgAssImpLoader.cpp
             src/glpg/glpgBaseMeshLoader.cpp
             src/glpg/glpgBaseMeshRenderer.cpp
@@ -61,6 +62,7 @@ add_library(glpg
             src/glpg/glpgShader.cpp
             src/glpg/glpgTextures.cpp
             include/glpgApp.h
+            include/glpgArcball.h
             include/glpgAssImpLoader.h
             include/glpgBaseMeshLoader.h
             include/glpgBaseMeshRenderer.h
@@ -117,6 +119,7 @@ include_directories(deps/glfw/include)
 include_directories(deps/gl3w/include)
 include_directories(deps/soil/src)
 include_directories(deps/assimp/include)
+include_directories(deps/glm)
 
 if (APPLE)
 include_directories(/usr/local/include)

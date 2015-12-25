@@ -129,6 +129,24 @@ namespace glpg
 
             return *this;
         }
+        
+        inline bool operator==(const vecN& that) const
+        {
+            int n;
+            for (n = 0; n < len; n++)
+            {
+                if(data[n] != that[n]) return false;
+            }
+        }
+        
+        inline bool operator!=(const vecN& that) const
+        {
+            int n;
+            for (n = 0; n < len; n++)
+            {
+                if(data[n] != that[n]) return true;
+            }
+        }
 
         inline vecN operator+(const vecN& that) const
         {
@@ -1174,12 +1192,38 @@ namespace glpg
 
         return result;
     }
+      
+      template <typename T>
+      static inline Tmat4<T> rotateRad(T angle, T x, T y, T z)
+      {
+          Tmat4<T> result;
+          
+          const T x2 = x * x;
+          const T y2 = y * y;
+          const T z2 = z * z;
+          const float c = cosf(angle);
+          const float s = sinf(angle);
+          const float omc = 1.0f - c;
+          
+          result[0] = Tvec4<T>(T(x2 * omc + c), T(y * x * omc + z * s), T(x * z * omc - y * s), T(0));
+          result[1] = Tvec4<T>(T(x * y * omc - z * s), T(y2 * omc + c), T(y * z * omc + x * s), T(0));
+          result[2] = Tvec4<T>(T(x * z * omc + y * s), T(y * z * omc - x * s), T(z2 * omc + c), T(0));
+          result[3] = Tvec4<T>(T(0), T(0), T(0), T(1));
+          
+          return result;
+      }
 
     template <typename T>
     static inline Tmat4<T> rotate(T angle, const vecN<T,3>& v)
     {
         return rotate<T>(angle, v[0], v[1], v[2]);
     }
+      
+      template <typename T>
+      static inline Tmat4<T> rotateRad(T angle, const vecN<T,3>& v)
+      {
+          return rotateRad<T>(angle, v[0], v[1], v[2]);
+      }
 
     template <typename T>
     static inline Tmat4<T> rotate(T angle_x, T angle_y, T angle_z)

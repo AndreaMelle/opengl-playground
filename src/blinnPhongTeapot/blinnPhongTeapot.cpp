@@ -6,7 +6,10 @@
 #include <glpgCompositeIndexdedMeshRenderer.h>
 #include <glpgAssImpLoader.h>
 #include <glpgPrimitives.h>
+#include <glpgArcball.h>
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace glpg;
 using namespace glpg::math;
@@ -20,9 +23,9 @@ class blinnPhongTeapot : public App
 
     struct uniforms_block
     {
-        math::mat4 modelview;
-        math::mat4 MVP;
-        math::mat4 normalmatrix;
+        glm::mat4 modelview;
+        glm::mat4 MVP;
+        glm::mat4 normalmatrix;
     };
 
     GLuint uniforms_buffer;
@@ -49,7 +52,7 @@ class blinnPhongTeapot : public App
     IMeshRenderer* teapotMesh;
 
     float aspect;
-    math::mat4 projection;
+    glm::mat4 projection;
 
     bool showDebugNormals;
     
@@ -64,20 +67,24 @@ class blinnPhongTeapot : public App
     struct
     {
         IMeshRenderer* mesh;
-        math::mat4 transform;
+        glm::mat4 transform;
     } grid;
     
     struct
     {
         IMeshRenderer* mesh;
-        math::mat4 transform;
+        glm::mat4 transform;
         
     } sphere;
+    
+    Arcball* arcball;
 
     virtual void settings()
     {
         mTitle = "BlinnPhong Teapot";
     }
+    
+    glm::mat4 m;
 
     virtual void setup()
     {
@@ -177,20 +184,26 @@ class blinnPhongTeapot : public App
 
         grid.mesh = glpg::UnitGrid::Create(5.0f, 5.0f, 10, 10);
         assert(grid.mesh != NULL);
-        grid.transform = math::translate(0.0f, -0.5f, -4.0f);
+        grid.transform = glm::translate(glm::mat4(), glm::vec3(0.0f, -0.5f, -4.0f));
         
-        sphere.mesh = UnitSphere::CreateMesh();
-        assert(sphere.mesh != NULL);
+        //sphere.mesh = UnitSphere::CreateMesh();
+        //assert(sphere.mesh != NULL);
         
-        sphere.transform= math::translate(0.0f, 0.0f, -5.0f) * math::scale(1.0f);
+        //sphere.transform= glm::translate(0.0f, 0.0f, -5.0f) * math::scale(1.0f);
 
         glEnable(GL_CULL_FACE); glFrontFace(GL_CCW);
         glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LEQUAL);
+        
+        arcball = new Arcball(mWindowWidth, mWindowHeight);
 
         onResize(mWindowWidth, mWindowHeight);
+        
+        m = glm::mat4();
 
     }
-
+    
+    
+    
     virtual void render(double currentTime)
     {
         glViewport(0, 0, 2 * mWindowWidth, 2 * mWindowHeight);
@@ -198,23 +211,25 @@ class blinnPhongTeapot : public App
         glClearBufferfv(GL_COLOR, 0, clearColor);
         glClearBufferfv(GL_DEPTH, 0, &clearDepth);
         
-        math::mat4 MVP = projection * grid.transform;
-        math::mat4 normalMatrix = grid.transform.inverse().transpose();
+        arcball->update(glm::mat4(), m);
+        
+        glm::mat4 glmMVP = projection * grid.transform * m;
         
         glUseProgram(unlitMat.progID);
 
-        glUniformMatrix4fv(unlitMat.transform_uniform, 1, GL_FALSE, MVP);
+        glUniformMatrix4fv(unlitMat.transform_uniform, 1, GL_FALSE, glm::value_ptr(glmMVP));
         
         grid.mesh->render();
         
         glUseProgram(0);
         
-        math::mat4 model = math::translate(0.0f, -0.5f, -4.0f)
-        * math::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f)
-        * math::scale(0.01f);
-        MVP = projection * model;
+        glm::mat4 model = glm::translate(glm::mat4(), glm::vec3(0.0f, -0.5f, -4.0f))
+        * m * glm::rotate(glm::mat4(), glm::radians((float)currentTime * 45.0f), glm::vec3(0.0f, 1.0f, 0.0f))
+        * glm::scale(glm::mat4(), glm::vec3(0.01f, 0.01f, 0.01f));
         
-        normalMatrix = model.inverse().transpose();
+        glm::mat4 MVP = projection * model;
+        
+        glm::mat4 normalMatrix = glm::transpose(glm::inverse(model));
 
         glUseProgram(programID);
 
@@ -236,12 +251,24 @@ class blinnPhongTeapot : public App
         if(showDebugNormals)
         {
             glUseProgram(normalVizProgramID);
-            glUniformMatrix4fv(normalVizMVPUniform, 1, GL_FALSE, MVP);
+            glUniformMatrix4fv(normalVizMVPUniform, 1, GL_FALSE, glm::value_ptr(MVP));
             glUniform1f(normalLengthUniform, 2.0f);
             teapotMesh->render();
         }
 
 
+    }
+    
+    virtual void onMouseButton(const int& button, const int& action)
+    {
+        int x, y;
+        getMousePosition(x, y);
+        arcball->onMouseButton(button, action, x, y);
+    }
+    
+    virtual void onMouseMove(const int& x, const int& y)
+    {
+        arcball->onMouseMove(x, y);
     }
 
     virtual void onKey(const int& key, const int& action)
@@ -260,12 +287,15 @@ class blinnPhongTeapot : public App
     virtual void onResize(const int& width, const int& height)
     {
         aspect = (float)width / (float)height;
-        projection = math::perspective(50.0f, aspect, 0.1f, 1000.0f);
+        projection = glm::perspective(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
+        
+        arcball->onResize(width, height);
     }
 
     virtual void shutdown()
     {
         delete teapotMesh;
+        delete arcball;
 
         glDeleteProgram(programID);
         glDeleteBuffers(1, &uniforms_buffer);
