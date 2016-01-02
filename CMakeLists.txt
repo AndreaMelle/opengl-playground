@@ -66,6 +66,7 @@ add_library(glpg
             include/glpgAssImpLoader.h
             include/glpgBaseMeshLoader.h
             include/glpgBaseMeshRenderer.h
+            include/glpgGeometry.h
             include/glpgCompositeIndexdedMeshRenderer.h
             include/glpgExt.h
             include/glpgIMeshLoader.h
@@ -91,6 +92,11 @@ set(EXAMPLES
   textureCube
   envMapSampling
   nprShading
+  shadowTemples
+  firstPersonControls
+  lutColorCorrection
+  volumetricRenderingSlicing
+  geometryTest
 )
 
 #find_package(OpenMP)

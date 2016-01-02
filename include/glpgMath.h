@@ -7,6 +7,9 @@
 #include <math.h>
 #include <assert.h>
 #include <limits>
+#include <glm/glm.hpp>
+
+#define GLPG_SMALL_NUM 0.00000001 // anything that avoids division overflow
 
 namespace glpg
 {
@@ -1407,6 +1410,8 @@ namespace glpg
     {
         return B + t * (B - A);
     }
+    
+      
   }
 }
 

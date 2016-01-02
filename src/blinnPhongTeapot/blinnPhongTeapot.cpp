@@ -52,6 +52,7 @@ class blinnPhongTeapot : public App
     IMeshRenderer* teapotMesh;
 
     float aspect;
+    glm::mat4 view;
     glm::mat4 projection;
 
     bool showDebugNormals;
@@ -184,7 +185,9 @@ class blinnPhongTeapot : public App
 
         grid.mesh = glpg::UnitGrid::Create(5.0f, 5.0f, 10, 10);
         assert(grid.mesh != NULL);
-        grid.transform = glm::translate(glm::mat4(), glm::vec3(0.0f, -0.5f, -4.0f));
+        grid.transform = glm::mat4();
+        
+        view = glm::translate(glm::mat4(), glm::vec3(0.0f, -0.5f, -4.0f));
         
         //sphere.mesh = UnitSphere::CreateMesh();
         //assert(sphere.mesh != NULL);
@@ -202,8 +205,6 @@ class blinnPhongTeapot : public App
 
     }
     
-    
-    
     virtual void render(double currentTime)
     {
         glViewport(0, 0, 2 * mWindowWidth, 2 * mWindowHeight);
@@ -213,23 +214,23 @@ class blinnPhongTeapot : public App
         
         arcball->update(glm::mat4(), m);
         
-        glm::mat4 glmMVP = projection * grid.transform * m;
+        glm::mat4 MVP = projection * view * m * grid.transform;
         
         glUseProgram(unlitMat.progID);
 
-        glUniformMatrix4fv(unlitMat.transform_uniform, 1, GL_FALSE, glm::value_ptr(glmMVP));
+        glUniformMatrix4fv(unlitMat.transform_uniform, 1, GL_FALSE, glm::value_ptr(MVP));
         
         grid.mesh->render();
         
         glUseProgram(0);
         
-        glm::mat4 model = glm::translate(glm::mat4(), glm::vec3(0.0f, -0.5f, -4.0f))
-        * m * glm::rotate(glm::mat4(), glm::radians((float)currentTime * 45.0f), glm::vec3(0.0f, 1.0f, 0.0f))
+        glm::mat4 model = m * glm::rotate(glm::mat4(), glm::radians((float)currentTime * 45.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale(glm::mat4(), glm::vec3(0.01f, 0.01f, 0.01f));
         
-        glm::mat4 MVP = projection * model;
+        MVP = projection * view * model;
         
-        glm::mat4 normalMatrix = glm::transpose(glm::inverse(model));
+        glm::mat4 modelview = view * model;
+        glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelview));
 
         glUseProgram(programID);
 
@@ -240,7 +241,7 @@ class blinnPhongTeapot : public App
                                                                   sizeof(uniforms_block),
                                                                   GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-        block->modelview = model;
+        block->modelview = modelview;
         block->MVP = MVP;
         block->normalmatrix = normalMatrix;
 

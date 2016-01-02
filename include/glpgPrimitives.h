@@ -6,6 +6,39 @@
 
 namespace glpg
 {
+    namespace NormalizedQuad
+    {
+        // Creates a quad where the larger dimension is 1 and the smaller is small / large
+        // Useful for 2D image display mantaining aspect ratios
+        BaseMeshRenderer* Create(const float width, const float height)
+        {
+            std::vector<math::vec3> mVertices;
+            std::vector<math::vec2> mUVs;
+            
+            float nw = width / fmax(width, height);
+            float nh = height / fmax(width, height);
+            
+            mVertices.push_back(math::vec3(-nw, -nh, 0.0));
+            mVertices.push_back(math::vec3( nw, -nh, 0.0));
+            mVertices.push_back(math::vec3(-nw,  nh, 0.0));
+            mVertices.push_back(math::vec3( nw,  nh, 0.0));
+            
+            mUVs.push_back(math::vec2(0.0, 0.0));
+            mUVs.push_back(math::vec2(1.0, 0.0));
+            mUVs.push_back(math::vec2(0.0, 1.0));
+            mUVs.push_back(math::vec2(1.0, 1.0));
+            
+            int vertexCount = mVertices.size();
+            
+            return new BaseMeshRenderer(vertexCount,
+                                        0,
+                                        mVertices,
+                                        mUVs,
+                                        std::vector<math::vec3>(),
+                                        GL_TRIANGLE_STRIP);
+        }
+    }
+    
     namespace UnitGrid
     {
         BaseMeshRenderer* Create(const float width,

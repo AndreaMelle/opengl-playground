@@ -122,6 +122,7 @@ void App::init()
     
     mFullscreen = 0;
     mStereo = 0;
+    mRobust = 0;
 
   this->settings();
 }

@@ -25,7 +25,7 @@ namespace glpg
                                       const unsigned int options = MeshLoaderOption_GenerateNormals | MeshLoaderOption_SmoothNormals,
                                       const float normalSmoothAngle = std::numeric_limits<float>::quiet_NaN())
         {
-            return TLoaderImpl::CreateImpl(filename);
+            return TLoaderImpl::CreateImpl(filename, options, normalSmoothAngle);
         }
     };
 }
