@@ -1,3 +1,3 @@
 # Look Up Table Color Correction
 
-<img src="screenshot.jpg" width="512">
+<img src="screenshot.jpg">
